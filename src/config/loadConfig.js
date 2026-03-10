@@ -82,6 +82,15 @@ export function loadConfig() {
         apiKey: process.env.OPENAI_COMPATIBLE_API_KEY || '',
         model: process.env.OPENAI_COMPATIBLE_MODEL || '',
         baseUrl: process.env.OPENAI_COMPATIBLE_BASE_URL || ''
+      },
+      openRouter: {
+        apiKey: process.env.OPENROUTER_API_KEY || '',
+        model: process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-nano-30b-a3b:free',
+        fallbackModel: process.env.OPENROUTER_FALLBACK_MODEL || '',
+        baseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+        httpReferer: process.env.OPENROUTER_HTTP_REFERER || '',
+        appTitle: process.env.OPENROUTER_APP_TITLE || 'Kuruma Discord Bot',
+        maxTokens: parseInteger(process.env.OPENROUTER_MAX_TOKENS, 2048)
       }
     }
   };

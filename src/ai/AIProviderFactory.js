@@ -4,6 +4,7 @@ import { ClaudeProvider } from './providers/ClaudeProvider.js';
 import { GrokProvider } from './providers/GrokProvider.js';
 import { OpenAICompatibleProvider } from './providers/OpenAICompatibleProvider.js';
 import { OpenAIProvider } from './providers/OpenAIProvider.js';
+import { OpenRouterProvider } from './providers/OpenRouterProvider.js';
 
 export function createAIProvider(config, logger) {
   switch (config.aiProvider) {
@@ -36,6 +37,17 @@ export function createAIProvider(config, logger) {
         apiKey: config.providers.openAiCompatible.apiKey,
         baseUrl: config.providers.openAiCompatible.baseUrl,
         model: config.providers.openAiCompatible.model
+      });
+    case 'openrouter':
+      return new OpenRouterProvider({
+        logger,
+        apiKey: config.providers.openRouter.apiKey,
+        baseUrl: config.providers.openRouter.baseUrl,
+        model: config.providers.openRouter.model,
+        fallbackModel: config.providers.openRouter.fallbackModel,
+        httpReferer: config.providers.openRouter.httpReferer,
+        appTitle: config.providers.openRouter.appTitle,
+        maxTokens: config.providers.openRouter.maxTokens
       });
     default:
       return null;

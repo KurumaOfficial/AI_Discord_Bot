@@ -1,30 +1,25 @@
 # Kuruma Discord Bot
 
-`Kuruma Discord Bot` — это `AI Discord Server Architect` на `Node.js + discord.js`
+`Kuruma Discord Bot` is an AI-powered Discord server architect built with `Node.js + discord.js`.
 
-Авторы: `Kuruma` и `Letifer`.
+Authors: `Kuruma`, `Letifer`.
 
-Бот умеет работать в двух режимах:
+The bot supports two working modes:
 
-- `rich` — бот сам общается с AI API прямо из Discord.
-- `bridge` — бот готовит специальный prompt-пакет для ChatGPT / Grok / Claude / любой браузерной модели, а потом применяет вручную вставленный ответ.
+- `rich` - the bot talks to an AI API directly from Discord and builds a plan automatically
+- `bridge` - the bot prepares a special package for a browser AI like ChatGPT, Grok, Claude, or any other model, then applies the returned `KURUMA_PLAN_V1` payload inside Discord
 
-Проект сделан так, чтобы основной сценарий общения был прямо в Discord: через slash-команды и через обычные сообщения с префиксом, по умолчанию `!`.
+## Core capabilities
 
-## Что умеет бот
+- natural-language server planning from slash commands or prefix messages
+- JSON server snapshot export
+- preview before apply
+- bridge-package generation for free manual use
+- reusable templates
+- persistent pending plans
+- wide Discord action execution layer
 
-- понимать обычный текст вроде `! наведи порядок в ролях и правах доступа`
-- собирать текущее состояние сервера в JSON snapshot
-- строить AI-план изменений
-- показывать preview плана перед применением
-- применять изменения через Discord API
-- поддерживать built-in шаблоны серверов
-- экспортировать bridge-пакет для бесплатного ручного режима
-- принимать bridge-ответ через modal или через `!apply`
-
-## Поддерживаемые типы действий
-
-Единый action engine умеет исполнять широкий набор операций:
+Supported action groups include:
 
 - `guild.update`
 - `role.create`, `role.update`, `role.delete`, `role.reposition`
@@ -37,236 +32,206 @@
 - `event.create`, `event.update`, `event.delete`
 - `message.send`
 
-Это не "весь Discord вслепую", а максимально широкий и расширяемый слой действий под серверное администрирование и архитектуру.
-
-## Архитектура
+## Project structure
 
 ```text
 Kuruma_Discord_Bot/
   src/
-    ai/          # провайдеры AI и interpreter
-    config/      # env и runtime config
-    discord/     # slash-команды, prefix handler, UI, permissions
+    ai/          # AI providers and interpreter layer
+    config/      # env loading and runtime config
+    discord/     # slash commands, prefix handler, UI
     engine/      # schema, templates, action executor
-    prompts/     # rich system prompt + bridge master prompt
-    services/    # orchestration layer
-    storage/     # JSON store
-    utils/       # логгер, fs, text, parser helpers
-  data/          # persistent store.json
-  logs/          # combined.log / error.log
-  test/          # базовые unit tests
+    prompts/     # rich and bridge prompts
+    services/    # orchestration services
+    storage/     # JSON persistence
+    utils/       # logger and helpers
+  data/
+  logs/
+  test/
 ```
 
-## Режимы работы
+## AI providers
 
-### 1. Rich mode
+The project currently supports:
 
-Используется, когда есть API-ключ:
+- `openai`
+- `grok`
+- `claude`
+- `openai-compatible`
+- `openrouter`
 
-- OpenAI
-- xAI / Grok
-- Anthropic / Claude
-- любой OpenAI-compatible API
+### OpenRouter
 
-Поток:
+OpenRouter is integrated as a first-class provider.
 
-1. пользователь пишет в Discord
-2. бот делает snapshot сервера
-3. AI возвращает структурированный JSON
-4. бот показывает preview
-5. админ нажимает `Apply Plan`
+- base URL: `https://openrouter.ai/api/v1`
+- endpoint: `/chat/completions`
+- auth: `Authorization: Bearer <OPENROUTER_API_KEY>`
+- required body fields: `model`, `messages`
+- optional OpenRouter headers: `HTTP-Referer`, `X-OpenRouter-Title`
 
-### 2. Bridge mode
+The bot also supports:
 
-Используется, когда денег на API нет.
+- free model example: `nvidia/nemotron-3-nano-30b-a3b:free`
+- fallback model on `429`
+- optional `max_tokens`
+- JSON-oriented response format for cleaner structured plans
 
-Поток:
+## Slash commands
 
-1. пользователь пишет запрос в Discord
-2. бот прикладывает `.txt` bridge package
-3. пользователь копирует его в браузерный AI
-4. внешний AI возвращает `KURUMA_PLAN_V1`
-5. пользователь вставляет это в бот
-6. бот валидирует план и предлагает применить
+- `/help`
+- `/mode`
+- `/setup`
+- `/template`
+- `/analyze_server`
+- `/fix_permissions`
+- `/export_state`
+- `/bridge_apply`
 
-То есть пользователь выступает мостом между внешней моделью и Discord-ботом.
+## Prefix usage
 
-## Slash-команды
+Default prefix: `!`
 
-- `/help` — краткая справка
-- `/mode` — переключить `rich` / `bridge`, при желании поменять префикс
-- `/setup` — основной natural-language запрос на создание или перестройку сервера
-- `/template` — встроенные шаблоны
-- `/analyze_server` — анализ текущего сервера
-- `/fix_permissions` — анализ и исправление прав доступа
-- `/export_state` — выгрузка snapshot сервера
-- `/bridge_apply` — открыть окно вставки bridge-ответа
-
-## Prefix-команды
-
-По умолчанию используется префикс `!`.
-
-Примеры:
+Examples:
 
 ```text
-! создай более профессиональную структуру сервера для игрового сообщества
-! проанализируй этот сервер и предложи как навести порядок в правах
-! как лучше организовать категории для стартап-комьюнити?
+! design a cleaner gaming community server
+! analyze moderator permissions and fix role hierarchy
 !template gaming
 !mode bridge
 !state
 !apply <KURUMA_PLAN_V1 payload>
 ```
 
-Если сообщение с префиксом не распознано как служебная команда, бот считает его обычным AI-запросом.
+If a prefixed message is not a service command, the bot treats it as a normal AI request.
 
-## Поведение AI
+## Setup
 
-Бот не должен быть сухим инструментом.
+### 1. Install
 
-Логика такая:
-
-- на обычные человеческие вопросы он отвечает нормально
-- но мягко тянет разговор обратно к Discord-архитектуре, ролям, каналам, permission flow, moderation и automation
-- по стилю это ближе к `GitHub Copilot`, чем к бездушному JSON-генератору
-
-## Быстрый старт
-
-### 1. Установка
-
-```bash
-cd Kuruma_Discord_Bot
+```powershell
+cd C:\Users\gameg\Desktop\Holo_Project\Kuruma_Discord_Bot
 npm install
 ```
 
-### 2. Discord Developer Portal
+### 2. Create `.env`
 
-Включи у бота:
-
-- `SERVER MEMBERS INTENT`
-- `MESSAGE CONTENT INTENT`
-- при необходимости дополнительные права для управления сервером
-
-Боту на сервере нужны как минимум права уровня:
-
-- `Manage Server`
-- `Manage Channels`
-- `Manage Roles`
-- `Moderate Members`
-
-Для части операций дополнительно понадобятся:
-
-- `Manage Emojis and Stickers`
-- `Manage Events`
-- `Administrator` или эквивалентный набор прав
-
-### 3. Настрой `.env`
-
-Скопируй:
-
-```bash
+```powershell
 Copy-Item .env.example .env
 ```
 
-Минимум нужно заполнить:
+Minimum required values:
 
 ```env
 DISCORD_TOKEN=
 CLIENT_ID=
 ```
 
-Если хочешь rich mode, добавь AI-провайдера и ключ:
+### 3. Configure Discord bot
 
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-4.1-mini
+Enable these intents in Discord Developer Portal:
+
+- `SERVER MEMBERS INTENT`
+- `MESSAGE CONTENT INTENT`
+
+Recommended bot permissions:
+
+- `Manage Guild`
+- `Manage Channels`
+- `Manage Roles`
+- `Moderate Members`
+- `Manage Emojis and Stickers`
+- `Manage Events`
+- `Send Messages`
+- `Embed Links`
+- `Attach Files`
+
+For initial testing, `Administrator` is acceptable.
+
+### 4. Deploy slash commands
+
+```powershell
+npm run deploy-commands
 ```
 
-Если API ключей нет:
+### 5. Start
+
+```powershell
+npm start
+```
+
+Development mode:
+
+```powershell
+npm run dev
+```
+
+## Example `.env` configurations
+
+### Free bridge mode
 
 ```env
 AI_PROVIDER=none
 DEFAULT_MODE=bridge
+PREFIX_SYMBOL=!
 ```
 
-### 4. Зарегистрируй slash-команды
+### OpenRouter rich mode
 
-```bash
-npm run deploy-commands
+```env
+AI_PROVIDER=openrouter
+DEFAULT_MODE=rich
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=nvidia/nemotron-3-nano-30b-a3b:free
+OPENROUTER_FALLBACK_MODEL=meta-llama/llama-3.3-70b-instruct:free
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_HTTP_REFERER=
+OPENROUTER_APP_TITLE=Kuruma Discord Bot
+OPENROUTER_MAX_TOKENS=2048
 ```
 
-Если в `.env` указан `COMMAND_GUILD_ID`, команды зарегистрируются только в тестовом сервере. Это удобно для быстрой отладки.
+Important notes for OpenRouter:
 
-### 5. Запусти бота
+- use the full model ID, for example `nvidia/nemotron-3-nano-30b-a3b:free`
+- the bot sends Bearer auth in `Authorization`
+- when the primary model returns `429`, the bot retries with `OPENROUTER_FALLBACK_MODEL` if configured
 
-```bash
-npm start
+### Generic OpenAI-compatible mode
+
+```env
+AI_PROVIDER=openai-compatible
+OPENAI_COMPATIBLE_API_KEY=
+OPENAI_COMPATIBLE_MODEL=
+OPENAI_COMPATIBLE_BASE_URL=
 ```
 
-Для разработки:
+## Main env variables
 
-```bash
-npm run dev
-```
+- `PREFIX_SYMBOL` - default prefix, for example `!`
+- `DEFAULT_MODE` - `rich` or `bridge`
+- `AI_PROVIDER` - `none | openai | grok | claude | openai-compatible | openrouter`
+- `ALLOW_DESTRUCTIVE_OPERATIONS` - allows delete operations
+- `EXECUTION_DELAY_MS` - delay between Discord API actions
+- `MAX_CONVERSATION_TURNS` - conversation memory depth
+- `MAX_PENDING_PLANS` - number of saved pending plans
 
-## Встроенные шаблоны
+## Safety
 
-Поддерживаются:
+- destructive operations are disabled by default
+- each plan is shown in preview before apply
+- bridge payloads are validated before execution
+- partially failed plans stay pending for retry
+- duplicate apply attempts are blocked
 
-- `gaming`
-- `startup`
-- `study`
-- `fan-community`
-- `creator`
-- `support`
+## Tests
 
-Пример:
+Run:
 
-```text
-/template name:gaming
-```
-
-## Файлы конфигурации
-
-Основные env-переменные:
-
-- `PREFIX_SYMBOL` — префикс по умолчанию, например `!`
-- `DEFAULT_MODE` — `rich` или `bridge`
-- `AI_PROVIDER` — `none | openai | grok | claude | openai-compatible`
-- `ALLOW_DESTRUCTIVE_OPERATIONS` — разрешить удаляющие действия
-- `EXECUTION_DELAY_MS` — задержка между API-операциями
-- `MAX_CONVERSATION_TURNS` — глубина памяти по серверу
-- `MAX_PENDING_PLANS` — сколько pending-планов держать в хранилище
-
-## Безопасность
-
-- destructive operations по умолчанию выключены
-- каждый план сначала идет в preview
-- применение происходит только после подтверждения
-- bridge payload проходит строгий парсинг
-- persistent storage лежит локально в `data/store.json`
-
-## Тесты
-
-Запуск:
-
-```bash
+```powershell
 npm test
 ```
 
-Сейчас покрыты базовые проверки:
+## Credits
 
-- парсинг structured JSON
-- bridge payload parser
-- валидация плана
-- template generation
-
-## Важное ограничение
-
-Проект уже покрывает широкий пласт Discord server management, но некоторые редкие или узкоспециализированные части Discord API могут потребовать добавления новых action handler'ов. Архитектура под это уже подготовлена.
-
-## Кредиты
-
-- Автор идеи и направление: `Kuruma`
-- Реализация и архитектурное оформление в проекте: `Kuruma` и `Letifer`
+- idea and product direction: `Kuruma`
+- implementation and architecture in this project: `Kuruma`, `Letifer`
