@@ -1,0 +1,32 @@
+{
+  "name": "kuruma-discord-bot",
+  "version": "1.0.0",
+  "description": "AI Discord Server Architect by Kuruma and Letifer",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "deploy-commands": "node src/deploy-commands.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "discord",
+    "discord.js",
+    "ai",
+    "server-architect",
+    "kuruma",
+    "letifer"
+  ],
+  "author": "Kuruma and Letifer",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.3.1",
+    "winston": "^3.19.0",
+    "zod": "^4.3.6"
+  }
+}
