@@ -1,6 +1,6 @@
 # Kuruma Discord Bot
 
-`Kuruma Discord Bot` — это `AI Discord Server Architect` на `Node.js + discord.js`, собранный в папке `Kuruma_Discord_Bot`.
+`Kuruma Discord Bot` — это `AI Discord Server Architect` на `Node.js + discord.js`
 
 Авторы: `Kuruma` и `Letifer`.
 
